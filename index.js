@@ -26,18 +26,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const api_1 = require("@atproto/api");
 const dotenv = __importStar(require("dotenv"));
 const cron_1 = require("cron");
-const process = __importStar(require("process"));
 dotenv.config();
 // Create a Bluesky Agent 
 const agent = new api_1.BskyAgent({
     service: 'https://bsky.social',
 });
 async function main() {
-    await agent.login({ identifier: process.env.BLUESKY_USERNAME, password: process.env.BLUESKY_PASSWORD });
-    await agent.post({
-        text: "🙂"
+    //await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
+    //await agent.post({
+    //text: "🙂"
+    //});
+    //console.log("Just posted!")
+    let args = {};
+    const response = await fetch("https://www.fightcade.com/api/", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ req: 'searchevents', ...args }),
     });
-    console.log("Just posted!");
+    console.log((await response.json()).results.results);
 }
 main();
 // Run this on a cron job

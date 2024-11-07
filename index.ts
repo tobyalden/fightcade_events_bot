@@ -2,21 +2,29 @@ import { BskyAgent } from '@atproto/api';
 import * as dotenv from 'dotenv';
 import { CronJob } from 'cron';
 import * as process from 'process';
+import { Fightcade } from 'fightcade-api';
 
 dotenv.config();
 
 // Create a Bluesky Agent 
 const agent = new BskyAgent({
     service: 'https://bsky.social',
-  })
+})
 
 
 async function main() {
-    await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
-    await agent.post({
-        text: "🙂"
+    //await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
+    //await agent.post({
+        //text: "🙂"
+    //});
+    //console.log("Just posted!")
+    let args = {};
+    const response = await fetch("https://www.fightcade.com/api/", {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({req: 'searchevents', ...args}),
     });
-    console.log("Just posted!")
+    console.log((await response.json()).results.results);
 }
 
 main();
