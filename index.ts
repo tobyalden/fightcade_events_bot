@@ -5,8 +5,8 @@ import * as process from 'process';
 import hdate from 'human-date';
 import hash from 'object-hash';
 
-const SimplDB = require('simpl.db');
-const db = new SimplDB();
+import SimplDB from 'simpl.db';
+const db = SimplDB();
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ const agent = new BskyAgent({
 
 async function main() {
     // Get all upcoming events from Fightcade
-    let args = { limit: 1, offset: 0};
+    const args = { limit: 1, offset: 0};
     const fc_response = await fetch("https://www.fightcade.com/api/", {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -28,17 +28,16 @@ async function main() {
     const events = (await fc_response.json()).results.results;
 
     for(const event of events) {
-        let event_hash = hash(event);
+        const event_hash = hash(event);
         if(db.has(event_hash)) {
             console.log('Event already processed. Skipping...');
             continue;
         }
         console.log('New event! Posting...');
         db.set(event_hash, true);
-        let formatted_date = hdate.prettyPrint(new Date(event.date));
-        let formatted_stream_url = event.stream.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "");
-        let post = `📣 ${event.name}
-
+        const formatted_date = hdate.prettyPrint(new Date(event.date));
+        const formatted_stream_url = event.stream.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "");
+        const post = `📣 ${event.name}
 🕹️ ${event.gameid}
 🗓️ ${formatted_date}
 🌍 ${event.region}
@@ -64,7 +63,7 @@ main();
 
 
 // Run this on a cron job
-const scheduleExpressionMinute = '* * * * *'; // Run once every minute for testing
+//const scheduleExpressionMinute = '* * * * *'; // Run once every minute for testing
 const scheduleExpression = '0 */3 * * *'; // Run once every three hours in prod
 
 const job = new CronJob(scheduleExpression, main); // change to scheduleExpressionMinute for testing
