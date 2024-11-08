@@ -22,11 +22,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const api_1 = require("@atproto/api");
 const dotenv = __importStar(require("dotenv"));
 const cron_1 = require("cron");
 const process = __importStar(require("process"));
+const human_date_1 = __importDefault(require("human-date"));
 dotenv.config();
 // Create a Bluesky Agent 
 const agent = new api_1.BskyAgent({
@@ -34,31 +38,30 @@ const agent = new api_1.BskyAgent({
 });
 async function main() {
     // Get all upcoming events from Fightcade
-    let args = { limit: 1, offset: 8 };
+    let args = { limit: 1, offset: 0 };
     const fc_response = await fetch("https://www.fightcade.com/api/", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ req: 'searchevents', ...args }),
     });
     const events = (await fc_response.json()).results.results;
-    let event = events[0];
-    await agent.login({ identifier: process.env.BLUESKY_USERNAME, password: process.env.BLUESKY_PASSWORD });
-    await agent.post({
-        text: event.name,
-        //embed: {
-        //$type: 'app.bsky.embed.external',
-        //external: {
-        //uri: event.link,
-        //title: event.name,
-        //description: "its a tournament"
-        //}
-        //},
-        createdAt: new Date().toISOString()
-    });
-    console.log("Just posted!");
-    //for(const event of events) {
-    //console.log(event);
-    //}
+    for (const event of events) {
+        let formatted_date = human_date_1.default.prettyPrint(new Date(event.date));
+        let post = `
+📣 ${event.name}
+
+🕹️ ${event.gameid}
+📅 ${formatted_date}
+🌍 ${event.region}
+🏆 ${event.link}
+📺 ${event.stream}`;
+        await agent.login({ identifier: process.env.BLUESKY_USERNAME, password: process.env.BLUESKY_PASSWORD });
+        await agent.post({
+            text: post,
+            createdAt: new Date().toISOString()
+        });
+        console.log("Just posted!");
+    }
     //name: "Good Fighters' JoJo's Bizarre Adventure HFTF Tournament #1",
     //author: 'stressedin',
     //date: 1731117600000,

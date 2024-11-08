@@ -2,10 +2,7 @@ import { BskyAgent, RichText } from '@atproto/api';
 import * as dotenv from 'dotenv';
 import { CronJob } from 'cron';
 import * as process from 'process';
-import ogs from 'open-graph-scraper';
-import axios from 'axios';
-import sharp from 'sharp';
-declare const Buffer;
+import hdate from 'human-date';
 
 dotenv.config();
 
@@ -16,7 +13,7 @@ const agent = new BskyAgent({
 
 async function main() {
     // Get all upcoming events from Fightcade
-    let args = { limit: 1, offset: 8};
+    let args = { limit: 1, offset: 0};
     const fc_response = await fetch("https://www.fightcade.com/api/", {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -24,26 +21,23 @@ async function main() {
     });
     const events = (await fc_response.json()).results.results;
 
-    let event = events[0];
+    for(const event of events) {
+        let formatted_date = hdate.prettyPrint(new Date(event.date));
+        let post = `
+📣 ${event.name}
 
-    await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
-    await agent.post({
-          text: event.name,
-          //embed: {
-            //$type: 'app.bsky.embed.external',
-            //external: {
-              //uri: event.link,
-              //title: event.name,
-              //description: "its a tournament"
-            //}
-          //},
-          createdAt: new Date().toISOString()
-    });
-    console.log("Just posted!")
-
-    //for(const event of events) {
-        //console.log(event);
-    //}
+🕹️ ${event.gameid}
+📅 ${formatted_date}
+🌍 ${event.region}
+🏆 ${event.link}
+📺 ${event.stream}`
+        await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
+        await agent.post({
+              text: post,
+              createdAt: new Date().toISOString()
+        });
+        console.log("Just posted!")
+    }
 
     //name: "Good Fighters' JoJo's Bizarre Adventure HFTF Tournament #1",
     //author: 'stressedin',
