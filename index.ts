@@ -10,6 +10,8 @@ const db = new SimplDB();
 
 dotenv.config();
 
+// TODO: Lint?
+
 // Create a Bluesky Agent 
 const agent = new BskyAgent({
     service: 'https://bsky.social',
@@ -34,18 +36,24 @@ async function main() {
         console.log('New event! Posting...');
         db.set(event_hash, true);
         let formatted_date = hdate.prettyPrint(new Date(event.date));
-        let post = `
-📣 ${event.name}
+        let formatted_stream_url = event.stream.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "");
+        let post = `📣 ${event.name}
 
 🕹️ ${event.gameid}
-📅 ${formatted_date}
+🗓️ ${formatted_date}
 🌍 ${event.region}
 🏆 ${event.link}
-📺 ${event.stream}`;
+📺 ${formatted_stream_url}`;
+
+        const rt = new RichText({
+            text: post,
+        });
+        await rt.detectFacets(agent);
 
         await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
         await agent.post({
-              text: post,
+              text: rt.text,
+              facets: rt.facets,
               createdAt: new Date().toISOString()
         });
         console.log("Just posted!")
