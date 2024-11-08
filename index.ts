@@ -3,6 +3,10 @@ import * as dotenv from 'dotenv';
 import { CronJob } from 'cron';
 import * as process from 'process';
 import hdate from 'human-date';
+import hash from 'object-hash';
+
+const SimplDB = require('simpl.db');
+const db = new SimplDB();
 
 dotenv.config();
 
@@ -22,6 +26,13 @@ async function main() {
     const events = (await fc_response.json()).results.results;
 
     for(const event of events) {
+        let event_hash = hash(event);
+        if(db.has(event_hash)) {
+            console.log('Event already processed. Skipping...');
+            continue;
+        }
+        console.log('New event! Posting...');
+        db.set(event_hash, true);
         let formatted_date = hdate.prettyPrint(new Date(event.date));
         let post = `
 📣 ${event.name}
@@ -30,7 +41,7 @@ async function main() {
 📅 ${formatted_date}
 🌍 ${event.region}
 🏆 ${event.link}
-📺 ${event.stream}`
+📺 ${event.stream}`;
 
         await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
         await agent.post({

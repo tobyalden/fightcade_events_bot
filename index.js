@@ -31,6 +31,9 @@ const dotenv = __importStar(require("dotenv"));
 const cron_1 = require("cron");
 const process = __importStar(require("process"));
 const human_date_1 = __importDefault(require("human-date"));
+const object_hash_1 = __importDefault(require("object-hash"));
+const SimplDB = require('simpl.db');
+const db = new SimplDB();
 dotenv.config();
 // Create a Bluesky Agent 
 const agent = new api_1.BskyAgent({
@@ -46,6 +49,13 @@ async function main() {
     });
     const events = (await fc_response.json()).results.results;
     for (const event of events) {
+        let event_hash = (0, object_hash_1.default)(event);
+        if (db.has(event_hash)) {
+            console.log('Event already processed. Skipping...');
+            continue;
+        }
+        console.log('New event! Posting...');
+        db.set(event_hash, true);
         let formatted_date = human_date_1.default.prettyPrint(new Date(event.date));
         let post = `
 📣 ${event.name}
